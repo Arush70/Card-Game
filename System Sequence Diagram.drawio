@@ -1,0 +1,127 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="System Sequence Diagram" id="ssd">
+    <mxGraphModel grid="1" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="userLine" edge="1" parent="1" style="html=1;points=[];perimeter=orthogonalPerimeter;startSize=8;endSize=8;dashed=1;strokeColor=#999999;" value="">
+          <mxGeometry x="75" y="100" as="geometry">
+            <mxPoint x="114" y="980" as="sourcePoint" />
+            <mxPoint x="114" y="980" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sysLine" edge="1" parent="1" style="html=1;dashed=1;strokeColor=#999999;" value="">
+          <mxGeometry x="410" y="80" as="geometry">
+            <mxPoint x="449" y="980" as="sourcePoint" />
+            <mxPoint x="449" y="980" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="fsLine" edge="1" parent="1" style="html=1;dashed=1;strokeColor=#999999;" value="">
+          <mxGeometry x="715" y="100" as="geometry">
+            <mxPoint x="754" y="980" as="sourcePoint" />
+            <mxPoint x="754" y="980" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="loopFrag" parent="1" style="shape=umlFrame;whiteSpace=wrap;html=1;width=60;height=24;fillColor=none;strokeColor=#666666;align=left;verticalAlign=top;" value="loop" vertex="1">
+          <mxGeometry height="290" width="690" x="79" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="loopGuard" parent="1" style="text;html=1;align=left;fontSize=10;" value="[until n and pack are both valid]" vertex="1">
+          <mxGeometry height="20" width="240" x="149" y="132" as="geometry" />
+        </mxCell>
+        <mxCell id="m1" edge="1" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;" value="enterNumberOfPlayers(n)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="114" y="175" as="sourcePoint" />
+            <mxPoint x="449" y="175" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m2" edge="1" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;" value="enterPackLocation(path)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="114" y="205" as="sourcePoint" />
+            <mxPoint x="449" y="205" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m3" edge="1" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;" value="readPack(path)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="449" y="240" as="sourcePoint" />
+            <mxPoint x="754" y="240" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m4" edge="1" parent="1" style="html=1;verticalAlign=bottom;endArrow=open;endFill=0;dashed=1;" value="lines / IO error">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="754" y="270" as="sourcePoint" />
+            <mxPoint x="449" y="270" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m5" edge="1" parent="1" style="html=1;verticalAlign=bottom;endArrow=open;endFill=0;dashed=1;" value="error message + re-prompt (if invalid)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="449" y="360" as="sourcePoint" />
+            <mxPoint x="114" y="360" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m6" edge="1" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;" value="confirm valid configuration">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="114" y="395" as="sourcePoint" />
+            <mxPoint x="449" y="395" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="altGuard1" parent="1" style="text;html=1;align=left;fontSize=10;" value="[a player dealt four of a kind]" vertex="1">
+          <mxGeometry height="20" width="240" x="139" y="442" as="geometry" />
+        </mxCell>
+        <mxCell id="m7" edge="1" parent="1" style="html=1;verticalAlign=bottom;endArrow=open;endFill=0;dashed=1;" value="print &quot;player i wins&quot; (immediate)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="449" y="540" as="sourcePoint" />
+            <mxPoint x="114" y="540" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="altDiv" edge="1" parent="1" style="line;strokeWidth=1;html=1;dashed=1;strokeColor=#999999;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="79" y="560" as="sourcePoint" />
+            <mxPoint x="769" y="560" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="altGuard2" parent="1" style="text;html=1;align=left;fontSize=10;" value="[else - normal play]" vertex="1">
+          <mxGeometry height="20" width="200" x="139" y="562" as="geometry" />
+        </mxCell>
+        <mxCell id="m8" edge="1" parent="1" style="html=1;verticalAlign=bottom;endArrow=open;endFill=0;dashed=1;" value="print &quot;player i wins&quot;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="449" y="670" as="sourcePoint" />
+            <mxPoint x="114" y="670" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m9" edge="1" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;" value="write 2n output files">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="449" y="705" as="sourcePoint" />
+            <mxPoint x="754" y="705" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m10" edge="1" parent="1" style="html=1;verticalAlign=bottom;endArrow=open;endFill=0;dashed=1;" value="confirm files written">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="449" y="745" as="sourcePoint" />
+            <mxPoint x="114" y="745" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="xpp0p2KnbhfLJo90xRPL-3" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value="User" vertex="1">
+          <mxGeometry height="740" width="100" x="64" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="xpp0p2KnbhfLJo90xRPL-4" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value="CardGame System" vertex="1">
+          <mxGeometry height="730" width="100" x="399" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="xpp0p2KnbhfLJo90xRPL-5" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value="File System" vertex="1">
+          <mxGeometry height="730" width="100" x="704" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="actVal" parent="1" style="html=1;points=[];perimeter=orthogonalPerimeter;fillColor=#d5e8d4;strokeColor=#82b366;rounded=0;verticalAlign=middle;align=left;spacingLeft=14;fontSize=10;" value="validate n,&#xa;validate 8n rows" vertex="1">
+          <mxGeometry height="44" width="12" x="443" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="actDeal" parent="1" style="html=1;points=[];fillColor=#d5e8d4;strokeColor=#82b366;rounded=0;verticalAlign=middle;align=left;spacingLeft=14;fontSize=10;" value="deal, fill decks,&#xa;detect immediate win" vertex="1">
+          <mxGeometry height="40" width="12" x="443" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="actPlay" parent="1" style="html=1;points=[];fillColor=#d5e8d4;strokeColor=#82b366;rounded=0;verticalAlign=middle;align=left;spacingLeft=14;fontSize=10;" value="start n threads,&#xa;draw/discard until&#xa;one player wins" vertex="1">
+          <mxGeometry height="50" width="12" x="443" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="altFrag" parent="1" style="shape=umlFrame;whiteSpace=wrap;html=1;width=48;height=24;fillColor=none;strokeColor=#666666;align=left;verticalAlign=top;" value="alt" vertex="1">
+          <mxGeometry height="330" width="690" x="79" y="440" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
