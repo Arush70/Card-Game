@@ -23,3 +23,21 @@
 hs_err_pid*
 replay_pid*
 /bin/
+
+
+build/
+
+# Generated game output files
+player*_output.txt
+deck*_output.txt
+
+# Packaged artefacts (built fresh at submission)
+!lib/*.jar
+
+# IDE clutter (not Eclipse — we share Eclipse config)
+.idea/
+.vscode/
+*.iml
+
+# OS files
+.DS_Store
