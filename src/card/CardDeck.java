@@ -19,14 +19,14 @@ import java.util.StringJoiner;
  */
 public class CardDeck {
 
-    /** The deck number, 1-based, used when naming the output file. */
+    //Deck's ID number(Deck1, Deck2..).
     private final int id;
 
-    /** The cards in the deck. The head is the top (drawn next), tail is the bottom. */
+    //Collection of cards. The front of list is the top (drawn next by another player), tail is the bottom. 
     private final Queue<Card> cards;
 
     /**
-     * Creates an empty deck with the given 1-based identifier.
+     * Creates an empty deck and gives it ID number.
      *
      * @param id the deck number (deck 1, deck 2, ...)
      */
@@ -36,7 +36,7 @@ public class CardDeck {
     }
 
     /**
-     * Returns this deck's 1-based identifier.
+     * Checking which deck this is.
      *
      * @return the deck number
      */
@@ -45,7 +45,8 @@ public class CardDeck {
     }
 
     /**
-     * Removes and returns the card at the top of the deck.
+     * Removes a card from the top of the deck.
+     * If the deck is empty it will return 'null'.
      *
      * @return the top card, or {@code null} if the deck is empty
      */
@@ -54,7 +55,7 @@ public class CardDeck {
     }
 
     /**
-     * Adds a card to the bottom of the deck.
+     * Puts a card to the bottom of the deck.
      *
      * @param card the card to discard onto the bottom; must not be null
      */
@@ -66,7 +67,7 @@ public class CardDeck {
     }
 
     /**
-     * Returns the number of cards currently in the deck.
+     * Returns the number of cards left in the deck.
      *
      * @return the current size
      */
@@ -75,9 +76,8 @@ public class CardDeck {
     }
 
     /**
-     * Returns the deck's contents as space-separated values, top card first,
-     * e.g. {@code "1 3 3 7"}.
-     *
+     * Checks the deck and list out all the cards from top to bottom,
+     * This are separated by spaces e.g. {@code "1 3 3 7"}.
      * @return the space-separated card values
      */
     public synchronized String getContents() {
@@ -89,9 +89,9 @@ public class CardDeck {
     }
 
     /**
-     * Writes this deck's final contents to {@code deck<id>_output.txt} in the
-     * form required by the specification, e.g. {@code "deck2 contents: 1 3 3 7"}.
-     *
+     * Automatically creates a text file like "deck2_output.txt"
+     * and writes exactly the cards left in it when the game was ended.
+     * 
      * @throws IOException if the file cannot be written
      */
     public synchronized void writeOutputFile() throws IOException {
