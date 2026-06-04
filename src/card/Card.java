@@ -10,12 +10,11 @@ package card;
  */
 public final class Card {
 
-    /** The face value of this card. Non-negative and never changes. */
+    // The face value of this card. Non-negative and never changes. 
     private final int value;
 
     /**
      * Creates a card with the given face value.
-     *
      * @param value the face value; must be zero or greater
      * @throws IllegalArgumentException if {@code value} is negative
      */
