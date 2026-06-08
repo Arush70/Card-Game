@@ -1,62 +1,93 @@
 package card;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * A single player in the card game.
+ * Represents a single player in the card game. Each player runs on their own thread.
  *
- * <p>This class encapsulates the player's logic: holding a hand of four cards,
- * checking whether the hand is a winning hand (four cards of the same value),
- * and choosing which card to discard under the specified strategy (keep cards
- * of the preferred denomination, discard a non-preferred card at random).</p>
+ * This class handles holding a 4-card hand, checking for a win (4 of a kind), 
+ * and deciding which card to discard. The strategy is simple: keep cards that 
+ * match the player's number, and discard any non-matching card at random.
  *
- * <p>Threading is intentionally not added in this class yet. The fields are
- * kept private and access is funnelled through methods so that when the
- * threading is added on Day 8 (an implementation of {@link Runnable}),
- * synchronisation can be applied in one place without rewriting the logic.
- * For now, all behaviour is single-threaded and pure to make it easy to
- * unit-test in isolation.</p>
+ * How thread safety works here:
+ * A player's own hand and log are only touched by their own thread, so they 
+ * don't need locks. The shared card decks are protected inside the CardDeck class 
+ * using synchronized methods. The game-over flags use Atomic variables, which are 
+ * safe to read and write across multiple threads without slow locking.
+ *
+ * To avoid deadlocks, a player takes a turn by interacting with one deck at a time 
+ * (left deck first, then right deck). The game-over flag is only checked between 
+ * turns, ensuring no thread stops halfway through a draw-and-discard action.
  */
-public class Player {
+public class Player implements Runnable {
 
-    /** Hand size required by the specification. */
+	// Every player must hold exactly 4 cards.
     public static final int HAND_SIZE = 4;
 
-    /** 1-based player index. Players are labelled 1..n. */
+    // player's ID number.
     private final int index;
 
-    /** This player's preferred card denomination, equal to {@link #index}. */
+    // The card value this player wants to keep, which matches their ID number.
     private final int preferred;
 
-    /** The four cards currently in the hand. */
+    // The four cards currently in the hand of player.
     private final List<Card> hand;
 
-    /** Source of randomness for choosing which non-preferred card to discard. */
+    // Random number generator to pick which unwanted card to discard.
     private final Random random;
 
+    // The deck to the player's left that they draw from.
+    private final CardDeck leftDeck;
+
+    // The deck to the player's right that they discard into.
+    private final CardDeck rightDeck;
+
+    // Shared flag; true once any player has won. Set by the winner. 
+    private final AtomicBoolean gameWon;
+
+    // Shared flag that flips to true as soon as anyone wins the game.
+    private final AtomicInteger winnerIndex;
+
+    // A list of text lines tracking the player's actions, saved to a file at the end.
+    private final List<String> log;
+
     /**
-     * Creates a player with the given 1-based index and an initial hand.
+     * Standard constructor to set up a player in the game ring.
      *
-     * @param index 1-based player index; must be positive
-     * @param initialHand the hand to start with; must contain exactly
-     *                    {@link #HAND_SIZE} cards
-     * @throws IllegalArgumentException if either argument is invalid
+     * @param index 1-based player index
+     * @param initialHand the four cards this player starts with
+     * @param leftDeck the deck this player draws from
+     * @param rightDeck the deck this player discards to
+     * @param gameWon shared flag, flipped to true once a player wins
+     * @param winnerIndex shared winner identifier, set before {@code gameWon}
      */
-    public Player(int index, List<Card> initialHand) {
-        this(index, initialHand, new Random());
+    public Player(int index,
+                  List<Card> initialHand,
+                  CardDeck leftDeck,
+                  CardDeck rightDeck,
+                  AtomicBoolean gameWon,
+                  AtomicInteger winnerIndex) {
+        this(index, initialHand, leftDeck, rightDeck, gameWon, winnerIndex, new Random());
     }
 
     /**
-     * Constructor used by tests to inject a deterministic {@link Random},
-     * so that the random-discard behaviour can be tested predictably.
-     *
-     * @param index 1-based player index
-     * @param initialHand the starting hand
-     * @param random the random source to use for discard selection
+     * Testing constructor that allows passing a specific Random object 
+     * to make card discards predictable.
      */
-    Player(int index, List<Card> initialHand, Random random) {
+    Player(int index,
+           List<Card> initialHand,
+           CardDeck leftDeck,
+           CardDeck rightDeck,
+           AtomicBoolean gameWon,
+           AtomicInteger winnerIndex,
+           Random random) {
         if (index <= 0) {
             throw new IllegalArgumentException(
                     "Player index must be positive, but was " + index);
@@ -68,44 +99,116 @@ public class Player {
         this.index = index;
         this.preferred = index;
         this.hand = new ArrayList<>(initialHand);
+        this.leftDeck = leftDeck;
+        this.rightDeck = rightDeck;
+        this.gameWon = gameWon;
+        this.winnerIndex = winnerIndex;
         this.random = random;
+        this.log = new ArrayList<>();
+        log.add("player " + index + " initial hand " + handAsString());
     }
 
     /**
-     * Returns this player's 1-based index.
-     *
-     * @return the player number
+     * The main loop for the player thread. It checks for an immediate win, 
+     * then keeps taking turns until someone else wins. Once the game ends, 
+     * it logs the outcome and saves the file.
      */
-    public int getIndex() {
-        return index;
+    @Override
+    public void run() {
+        // Check if the player was dealt a winning hand right at the start.
+        if (isWinningHand()) {
+            declareWin();
+            writeOutputFile();
+            return;
+        }
+        while (!gameWon.get()) {
+            takeTurn();
+            if (isWinningHand()) {
+                declareWin();
+                break;
+            }
+        }
+        if (winnerIndex.get() != index) {
+            recordLossExit();
+        }
+        writeOutputFile();
     }
 
     /**
-     * Returns this player's preferred card denomination (equal to the index).
-     *
-     * @return the preferred denomination
+     * Handles drawing a card from the left deck and discarding one to the right deck. 
+     * If the left deck is temporarily empty because the neighbor hasn't discarded yet, 
+     * the player pauses briefly to let them catch up instead of burning CPU time.
      */
-    public int getPreferred() {
-        return preferred;
+    void takeTurn() {
+        Card drawn = leftDeck.draw();
+        if (drawn == null) {
+            // Another player hasn't discarded into our left deck yet; yield briefly.
+            Thread.yield();
+            return;
+        }
+        hand.add(drawn);
+        Card toDiscard = chooseDiscard();
+        hand.remove(toDiscard);
+        rightDeck.discard(toDiscard);
+        log.add("player " + index + " draws a " + drawn.getValue()
+                + " from deck " + leftDeck.getId());
+        log.add("player " + index + " discards a " + toDiscard.getValue()
+                + " to deck " + rightDeck.getId());
+        log.add("player " + index + " current hand is " + handAsString());
     }
 
     /**
-     * Returns a defensive copy of the current hand, so external code can read
-     * it (for logging, testing, deck output) without being able to modify the
-     * player's real hand.
-     *
-     * @return a snapshot of the hand
+     * Sets this player as the winner, updates the shared game state, 
+     * and writes the win message to the console and log.
      */
+    private void declareWin() {
+        // Set the winner ID first, then flip the flag so other players see both updates together
+        winnerIndex.set(index);
+        gameWon.set(true);
+        System.out.println("player " + index + " wins");
+        log.add("player " + index + " wins");
+        log.add("player " + index + " exits");
+        log.add("player " + index + " final hand: " + handAsString());
+    }
+
+    /**
+     * Adds the required loss message to the log when another player wins the game.
+     */
+
+    private void recordLossExit() {
+        int winner = winnerIndex.get();
+        log.add("player " + winner + " has informed player " + index
+                + " that player " + winner + " has won");
+        log.add("player " + index + " exits");
+        log.add("player " + index + " hand: " + handAsString());
+    }
+
+    // Writes all tracked log actions to a text file named after the player.
+    private void writeOutputFile() {
+        String fileName = "player" + index + "_output.txt";
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
+            for (String line : log) {
+                writer.write(line);
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            System.err.println("player " + index
+                    + " could not write its output file: " + e.getMessage());
+        }
+    }
+
+
+    // Returns the player's ID number.
+    public int getIndex() { return index; }
+    // Returns the card value this player wants to keep.
+    public int getPreferred() { return preferred; }
+
+    // Returns a safe copy of the hand so outside code can't accidentally change it.
     public List<Card> getHand() {
         return new ArrayList<>(hand);
     }
 
-    /**
-     * Renders the hand as space-separated values in current order,
-     * e.g. {@code "1 1 2 4"}, matching the format required for output files.
-     *
-     * @return the hand as a space-separated string
-     */
+    // Formats the hand into a clean space-separated string like "4 3 2 4".
     public String handAsString() {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < hand.size(); i++) {
@@ -115,15 +218,7 @@ public class Player {
         return sb.toString();
     }
 
-    /**
-     * Returns {@code true} if every card in the hand has the same value.
-     *
-     * <p>The specification states that a player with four cards of the same
-     * value wins, regardless of whether that value is the player's preferred
-     * denomination.</p>
-     *
-     * @return whether this hand is a winning hand
-     */
+    // Returns true if all cards in the hand have the exact same value.
     public boolean isWinningHand() {
         int first = hand.get(0).getValue();
         for (int i = 1; i < hand.size(); i++) {
@@ -133,18 +228,9 @@ public class Player {
     }
 
     /**
-     * Chooses a card to discard from the current hand according to the
-     * specified strategy: never discard a card of the preferred denomination;
-     * if more than one non-preferred card is held, choose one at random.
-     *
-     * <p>This method assumes the hand is not already a winning hand of the
-     * preferred denomination &mdash; if every card matches the preferred
-     * value, the player has already won and should not be discarding. If the
-     * hand somehow contains no non-preferred cards at all, an
-     * {@link IllegalStateException} is thrown to surface the bug rather than
-     * silently violating the discard rule.</p>
-     *
-     * @return the card to discard (not yet removed from the hand)
+     * Returns a non-preferred card to discard, chosen uniformly at random.
+     * Package-private tests in the same package (and {@link #takeTurn})
+     * can invoke it.
      */
     Card chooseDiscard() {
         List<Integer> nonPreferred = new ArrayList<>();
@@ -159,29 +245,5 @@ public class Player {
         }
         int pickIndex = nonPreferred.get(random.nextInt(nonPreferred.size()));
         return hand.get(pickIndex);
-    }
-
-    /**
-     * Adds a drawn card to the hand. This is exposed for the future
-     * {@code run()} loop and for tests.
-     *
-     * @param card the card just drawn; must not be null
-     */
-    void addToHand(Card card) {
-        if (card == null) {
-            throw new IllegalArgumentException("Cannot add a null card to the hand");
-        }
-        hand.add(card);
-    }
-
-    /**
-     * Removes a specific card object from the hand. Used after a discard has
-     * been chosen by {@link #chooseDiscard()}.
-     *
-     * @param card the card to remove (compared by identity, not value)
-     * @return whether the card was found and removed
-     */
-    boolean removeFromHand(Card card) {
-        return hand.remove(card);
     }
 }
