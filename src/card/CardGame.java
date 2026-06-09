@@ -13,32 +13,31 @@ import javax.swing.JOptionPane;
 /**
  * The executable entry point for the multi-threaded card game simulation.
  *
- * <p>This class is the orchestrator. It does not contain any game-rule logic
- * itself; instead it composes the existing components: prompting the user,
- * delegating pack validation to {@link PackReader}, dealing to {@link Dealer},
- * starting the {@link Player} threads, awaiting completion, and writing each
- * {@link CardDeck}'s final output file. Keeping {@code CardGame} as pure
- * orchestration is a deliberate separation of concerns &mdash; each class
- * still has exactly one job.</p>
+ * This class acts as the central orchestrator. It does not contain any game-rule logic
+ * itself; instead, it composes the existing components by prompting the user,
+ * delegating pack validation to PackReader, dealing cards via Dealer,
+ * starting the Player threads, awaiting completion, and writing each
+ * CardDeck's final output file. Keeping CardGame as pure orchestration ensures 
+ * a deliberate separation of concerns where each class has exactly one job.
  *
- * <p>Input is collected via {@link JOptionPane} dialogs where a display is
- * available, and falls back automatically to the terminal in a headless
- * environment, so the game runs identically in both situations. The same
- * validation is applied on both input paths.</p>
+ * Input is collected via JOptionPane dialogs where a display is available, 
+ * and falls back automatically to the terminal in a headless environment, 
+ * ensuring the game runs identically in both situations. The exact same 
+ * validation logic is applied across both input paths.
  */
 public class CardGame {
 
-    /** Standard output stream, made overridable for tests if ever needed. */
+    // Standard output stream, made overridable for tests if ever needed.
     private static final PrintStream OUT = System.out;
 
-    /** Whether to use graphical dialogs (true) or terminal prompts (false). */
+    // Whether to use graphical dialogs (true) or terminal prompts (false). 
     private final boolean useDialog;
 
-    /** Scanner over standard input, only created when the terminal is used. */
+    // Scanner over standard input, only created when the terminal is used. 
     private final Scanner scanner;
 
     /**
-     * Default constructor: choose dialog vs terminal automatically based on
+     * Default constructor: chooses dialog vs terminal automatically based on
      * whether a display is available.
      */
     public CardGame() {
@@ -65,8 +64,9 @@ public class CardGame {
     }
 
     /**
-     * Runs one full game: prompts for inputs, validates them, deals, starts
-     * the threads, waits for completion, and writes the deck output files.
+     * Runs one full game loop: prompts for inputs, validates them, deals the deck, 
+     * spawns the concurrent threads, blocks until execution completes, and writes 
+     * the final deck state files.
      */
     public void play() {
         int n = promptForNumberOfPlayers();
@@ -120,11 +120,11 @@ public class CardGame {
                 + n + " deck files)");
     }
 
-    // ----- Input prompts ----------------------------------------------------
+    // Input prompts
 
-    /**
-     * Prompts the user for {@code n}, re-prompting until a positive integer
-     * is supplied.
+     /**
+     * Prompts the user for number of players, iterating until a positive integer 
+     * is successfully parsed.
      */
     int promptForNumberOfPlayers() {
         while (true) {
@@ -165,7 +165,7 @@ public class CardGame {
         }
     }
 
-    /** Sends a prompt to the user and returns the response, or null on cancel. */
+    // Sends a prompt to the user and returns the response, or null on cancel. 
     private String ask(String prompt) {
         if (useDialog) {
             return JOptionPane.showInputDialog(null, prompt);
@@ -174,7 +174,7 @@ public class CardGame {
         return scanner.hasNextLine() ? scanner.nextLine() : null;
     }
 
-    /** Shows an error message via dialog or terminal. */
+    // Shows an error message via dialog or terminal. 
     private void showError(String message) {
         if (useDialog) {
             JOptionPane.showMessageDialog(null, message,

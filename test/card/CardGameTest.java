@@ -19,12 +19,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Integration tests for {@link CardGame}.
+ * Integration tests for CardGame.
  *
- * <p>These tests force {@code CardGame} into its terminal-input mode and feed
- * simulated user input through {@link System#setIn}, so the game can be run
- * non-interactively. The end-to-end test exercises the full pipeline:
- * prompt &rarr; validate &rarr; deal &rarr; thread &rarr; output files.</p>
+ * These tests force CardGame into terminal-input mode and pass simulated user 
+ * input streams through System.setIn so the game routine runs non-interactively. 
+ * The end-to-end test executes the full application pipeline: prompt, validate, 
+ * deal, concurrent thread execution, and file output.
  */
 class CardGameTest {
 
@@ -40,13 +40,14 @@ class CardGameTest {
         System.setOut(new PrintStream(capturedOut));
     }
 
+    // Restores the default system streams after each individual test finishes execution
     @AfterEach
     void restore() {
         System.setIn(originalIn);
         System.setOut(originalOut);
     }
 
-    /** Feeds the given lines (joined by newlines) into System.in. */
+    // Feeds the given array of lines, joined by newlines, directly into System.in.
     private void feed(String... lines) {
         StringBuilder sb = new StringBuilder();
         for (String line : lines) {
@@ -55,7 +56,7 @@ class CardGameTest {
         System.setIn(new ByteArrayInputStream(sb.toString().getBytes()));
     }
 
-    /** Writes a 32-row pack file rigged so player 1 wins immediately. */
+    // Writes a 32-row pack file rigged so player 1 wins immediately. 
     private static Path writeRiggedPack(Path dir) throws Exception {
         int[] vals = new int[32];
         for (int i = 0; i < 32; i++) vals[i] = (i % 4 == 0) ? 1 : 0;
@@ -83,14 +84,15 @@ class CardGameTest {
     @Test
     @DisplayName("Re-prompts for the pack when path is invalid, then accepts a valid pack")
     void rePromptsForBadPack(@TempDir Path tempDir) throws Exception {
+    	// Uses the @TempDir annotation to handle sandbox file creations safely
         Path bad = tempDir.resolve("too-short.txt");
         Files.writeString(bad, "1\n2\n3\n");
         Path good = writeRiggedPack(tempDir);
 
         feed(
-                "/no/such/file.txt",     // IOException -> re-prompt
-                bad.toString(),          // wrong number of rows -> re-prompt
-                good.toString()          // valid -> accepted
+                "/no/such/file.txt",     // Triggers IOException -> forces a re-prompt
+                bad.toString(),          // Triggers row count validation mismatch -> forces a re-prompt
+                good.toString()          // Valid dataset structure -> pack accepted successfully
         );
         CardGame game = new CardGame(false);
         List<Card> cards = game.promptForValidPack(4);
@@ -100,13 +102,12 @@ class CardGameTest {
     @Test
     @DisplayName("End-to-end: a full game runs and writes 2n output files")
     void endToEndFullGame(@TempDir Path tempDir) throws Exception {
+    	// Uses the @TempDir parameter to safely isolate file system operations
         Path pack = writeRiggedPack(tempDir);
 
-        // Run the game from the temp directory so output files land there
-        // rather than the project root. We work around the fact that Java IO
-        // uses the JVM's working dir (set at launch) by writing the test pack
-        // and then changing the user.dir before invoking play() - relative
-        // file paths written by Player/CardDeck honour user.dir on most JREs.
+        // Run the game simulation inside the isolated directory so I/O side effects
+        // don't land in the project root. We update the user.dir system property right 
+        // before calling play() since standard Java IO relative paths honour this on most JREs.
         String originalDir = System.getProperty("user.dir");
         try {
             System.setProperty("user.dir", tempDir.toString());
@@ -117,7 +118,7 @@ class CardGameTest {
         }
 
         // The output files may end up in either user.dir or the JVM working
-        // directory, so check both.
+        // directory, so checking both.
         for (int i = 1; i <= 4; i++) {
             assertTrue(
                     Files.exists(tempDir.resolve("player" + i + "_output.txt"))
