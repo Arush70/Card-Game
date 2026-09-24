@@ -41,3 +41,8 @@ deck*_output.txt
 
 # OS files
 .DS_Store
+
+# OS / editor / notebook clutter
+Thumbs.db
+.ipynb_checkpoints/
+__pycache__/
